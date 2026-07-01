@@ -60,13 +60,12 @@
 
   <div id="root"></div>
 
-  <!-- React + Babel (CDN) -->
+  <!-- React（本体のみ・Babel不要） -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
 
-  <!-- アプリ本体（JSX）を外部ファイルから読み込み -->
-  <script type="text/babel" src="/app.jsx" data-presets="react"></script>
+  <!-- アプリ本体（事前コンパイル済みJS。Babelでのブラウザ内変換は行わない） -->
+  <script src="/bundle.js"></script>
 
   <script>
     // Service Worker 登録
