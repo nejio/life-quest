@@ -6,13 +6,13 @@
   <title>LIFE QUEST</title>
 
   <!-- PWA -->
-  <link rel="manifest" href="/manifest.json" />
+  <link rel="manifest" href="./manifest.json" />
   <meta name="theme-color" content="#4f6ef7" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="LIFE QUEST" />
-  <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+  <link rel="apple-touch-icon" href="./icons/icon-192x192.png" />
 
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -65,13 +65,13 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 
   <!-- アプリ本体（事前コンパイル済みJS。Babelでのブラウザ内変換は行わない） -->
-  <script src="/bundle.js"></script>
+  <script src="./bundle.js"></script>
 
   <script>
     // Service Worker 登録
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
+        navigator.serviceWorker.register('./sw.js')
           .then(() => console.log('SW registered'))
           .catch(e => console.log('SW error', e));
       });

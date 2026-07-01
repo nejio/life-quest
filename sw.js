@@ -1,8 +1,8 @@
-const CACHE_NAME = 'lifequest-v2';
+const CACHE_NAME = 'lifequest-v3';
 const ASSETS = [
-  '/',
-  '/index.html',
-  '/bundle.js',
+  './',
+  './index.html',
+  './bundle.js',
 ];
 
 // インストール時にキャッシュ
