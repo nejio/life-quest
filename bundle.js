@@ -3227,4 +3227,5 @@ function LifeQuest() {
     boxShadow: `0 4px 20px ${toast.color}30`
   } }, toast.msg));
 }
-export default LifeQuest;
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/* @__PURE__ */ React.createElement(LifeQuest, null));
