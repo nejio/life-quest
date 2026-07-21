@@ -65,7 +65,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 
   <!-- アプリ本体（事前コンパイル済みJS。Babelでのブラウザ内変換は行わない） -->
-  <script src="./bundle.js"></script>
+  <!-- ★ bundle.jsを更新してデプロイするたびに ?v= の数字を+1する（CDN/ブラウザキャッシュ対策） -->
+  <script src="./bundle.js?v=6"></script>
 
   <script>
     // Service Worker 登録
