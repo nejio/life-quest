@@ -63,6 +63,7 @@
     }
   }
   const CHAR_IMAGE_BASE = "https://nejio.github.io/life-quest/characters/";
+  const AVATAR_IMAGE_BASE = "https://nejio.github.io/life-quest/avatars/";
   const CHAR_MAX_LEVEL = 10;
   const CHAR_EVOLUTION_LEVELS = [1, 4, 8];
   function xpForCharLevel(lv) {
@@ -119,6 +120,25 @@
   }
   const GACHA_CHARACTERS = [
     {
+      // 初期配布キャラクター。ガチャからは排出されない(initial:true)が、
+      // それ以外(キャラLv・進化・パッシブ・装備・図鑑)はガチャキャラと完全に同等。
+      id: "c000",
+      name: "\u30A8\u30D5\u30A3",
+      rarity: "SSR",
+      initial: true,
+      stages: [
+        AVATAR_IMAGE_BASE + "wanderer.png",
+        // キャラLv1〜：放浪者
+        AVATAR_IMAGE_BASE + "knight.png",
+        // キャラLv4〜：騎士
+        AVATAR_IMAGE_BASE + "sovereign.png"
+        // キャラLv8〜：覇王
+      ],
+      passive: { type: "xp", cat: "all", val: 0.05 },
+      passiveDesc: "\u5168\u30AB\u30C6\u30B4\u30EAEXP +5%",
+      flavor: "\u540D\u3082\u306A\u304D\u653E\u6D6A\u8005\u3068\u3057\u3066\u65C5\u3092\u59CB\u3081\u3001\u5263\u3092\u63B2\u3052\u308B\u9A0E\u58EB\u3092\u7D4C\u3066\u3001\u3084\u304C\u3066\u7389\u5EA7\u306B\u81F3\u308B\u2014\u2014\u305D\u306E\u6B69\u307F\u306F\u3001\u3042\u306A\u305F\u81EA\u8EAB\u306E\u8A18\u9332\u3068\u3068\u3082\u306B\u3042\u308B\u3002"
+    },
+    {
       id: "c001",
       name: "\u30A8\u30EA\u30AB",
       rarity: "UR",
@@ -159,11 +179,10 @@
   function drawCharacterDrop(ownedCharIds) {
     if (GACHA_CHARACTERS.length === 0) return null;
     if (Math.random() >= CHARACTER_DROP_RATE) return null;
-    const candidates = GACHA_CHARACTERS.filter((c) => !ownedCharIds.includes(c.id));
+    const candidates = GACHA_CHARACTERS.filter((c) => !c.initial && !ownedCharIds.includes(c.id));
     if (candidates.length === 0) return null;
     return candidates[Math.floor(Math.random() * candidates.length)];
   }
-  const AVATAR_IMAGE_BASE = "https://nejio.github.io/life-quest/avatars/";
   const CHAR_IMAGES = {
     wanderer: AVATAR_IMAGE_BASE + "wanderer.png",
     acolyte: AVATAR_IMAGE_BASE + "acolyte.png",
@@ -918,7 +937,7 @@
   function calcExternalXPBonus(catId, equippedChar, isSubscribed = false) {
     let bonus = 0;
     const char = getEquippedCharData(equippedChar);
-    if (char?.passive?.type === "xp" && char.passive.cat === catId) bonus += char.passive.val;
+    if (char?.passive?.type === "xp" && (char.passive.cat === catId || char.passive.cat === "all")) bonus += char.passive.val;
     if (isSubscribed) bonus += SUBSCRIPTION_XP_BOOST;
     return bonus;
   }
@@ -1307,6 +1326,18 @@
       if (moved > 0) {
         setLogs((prev) => prev.filter((l) => !isBonusLog(l)));
         setBonusXP((b) => b + moved);
+      }
+    }, []);
+    useEffect(() => {
+      if (ownedChars.includes("c000")) return;
+      setOwnedChars((prev) => prev.includes("c000") ? prev : [...prev, "c000"]);
+      if (!equippedChar) setEquippedChar("c000");
+      if (charXP["c000"] === void 0) {
+        const stageIdx = CHAR_STAGES.reduce((acc, s, i) => lvInfo.lv >= s.minLv ? i : acc, 0);
+        const targetCharLv = stageIdx >= 4 ? 8 : stageIdx >= 2 ? 4 : 1;
+        let xp = 0;
+        for (let l = 1; l < targetCharLv; l++) xp += xpForCharLevel(l);
+        setCharXP((prev) => ({ ...prev, c000: xp }));
       }
     }, []);
     useEffect(() => {
@@ -1894,7 +1925,7 @@
     })()), /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }, (() => {
       const eqData = GACHA_CHARACTERS.find((c) => c.id === equippedChar);
       if (eqData) {
-        return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 9, color: "#a16207", letterSpacing: 3, marginBottom: 4 } }, "EQUIPPED"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 22, fontWeight: 800, marginBottom: 2 } }, eqData.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "#78716c", marginBottom: 12 } }, "\u2605\u2605\u2605 UR"));
+        return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 9, color: "#a16207", letterSpacing: 3, marginBottom: 4 } }, "EQUIPPED"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 22, fontWeight: 800, marginBottom: 2 } }, eqData.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "#78716c", marginBottom: 12 } }, "\u2605\u2605\u2605 ", eqData.rarity));
       }
       return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 9, color: stage.primaryColor, letterSpacing: 3, marginBottom: 4 } }, stage.name.toUpperCase()), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 22, fontWeight: 800, marginBottom: 2 } }, stage.title_ja), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "#78716c", marginBottom: 12 } }, "\u2605".repeat(stage.rarity), "\u2606".repeat(5 - stage.rarity)));
     })(), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 } }, [
@@ -1938,7 +1969,7 @@
         opacity: 0.06,
         backgroundImage: `linear-gradient(${equippedData ? "#fbbf24" : stage.primaryColor} 1px,transparent 1px),linear-gradient(90deg,${equippedData ? "#fbbf24" : stage.primaryColor} 1px,transparent 1px)`,
         backgroundSize: "20px 20px"
-      } }), equippedData ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", fontSize: 14, marginBottom: 4, color: "#f0c060", textShadow: "0 0 8px #f0c060" } }, "\u2605\u2605\u2605 UR"), /* @__PURE__ */ React.createElement("div", { style: { height: 300, position: "relative", zIndex: 1, display: "flex", alignItems: "center", justifyContent: "center" } }, /* @__PURE__ */ React.createElement("img", { src: getCharacterStageImage(equippedData, calcCharLevel(charXP[equippedData.id] || 0).lv), alt: equippedData.name, style: {
+      } }), equippedData ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", fontSize: 14, marginBottom: 4, color: "#f0c060", textShadow: "0 0 8px #f0c060" } }, "\u2605\u2605\u2605 ", equippedData.rarity), /* @__PURE__ */ React.createElement("div", { style: { height: 300, position: "relative", zIndex: 1, display: "flex", alignItems: "center", justifyContent: "center" } }, /* @__PURE__ */ React.createElement("img", { src: getCharacterStageImage(equippedData, calcCharLevel(charXP[equippedData.id] || 0).lv), alt: equippedData.name, style: {
         maxHeight: "100%",
         maxWidth: "100%",
         objectFit: "contain",
@@ -1958,7 +1989,7 @@
         color: "#a16207"
       } }, equippedData.passiveDesc)), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", marginTop: 14, position: "relative", zIndex: 1 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => {
         setEquippedChar("");
-        showToast("\u57FA\u672C\u30AD\u30E3\u30E9\u30AF\u30BF\u30FC\u306B\u623B\u3057\u307E\u3057\u305F", "#a8a29e");
+        showToast("RANK\u30A2\u30D0\u30BF\u30FC\u8868\u793A\u306B\u623B\u3057\u307E\u3057\u305F", "#a8a29e");
       }, style: {
         padding: "8px 20px",
         borderRadius: 10,
@@ -1968,7 +1999,7 @@
         color: "#78716c",
         fontWeight: 700,
         fontSize: 12
-      } }, "\u57FA\u672C\u30AD\u30E3\u30E9\u30AF\u30BF\u30FC\u306B\u623B\u3059"))) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: {
+      } }, "RANK\u30A2\u30D0\u30BF\u30FC\u8868\u793A\u306B\u623B\u3059"))) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: {
         textAlign: "center",
         fontSize: 14,
         marginBottom: 4,
@@ -2011,7 +2042,7 @@
         background: "#fef3c7",
         padding: "3px 10px",
         borderRadius: 999
-      } }, ownedChars.length, "/", GACHA_CHARACTERS.length)), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "#78716c", marginBottom: 14 } }, "\u30AC\u30C1\u30E3\u3067\u4F4E\u78BA\u7387\u5165\u624B\u3067\u304D\u308B\u7279\u5225\u306A\u4EF2\u9593\u305F\u3061\u3002\u88C5\u5099\u3059\u308B\u3068\u898B\u305F\u76EE\u3068\u30D1\u30C3\u30B7\u30D6\u52B9\u679C\u304C\u5207\u308A\u66FF\u308F\u308B\u3002"), GACHA_CHARACTERS.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "#a8a29e", textAlign: "center", padding: "16px 0" } }, "\u307E\u3060\u30AD\u30E3\u30E9\u30AF\u30BF\u30FC\u304C\u767B\u9332\u3055\u308C\u3066\u3044\u307E\u305B\u3093") : /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(88px, 1fr))", gap: 10 } }, GACHA_CHARACTERS.map((c) => {
+      } }, ownedChars.length, "/", GACHA_CHARACTERS.length)), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "#78716c", marginBottom: 14 } }, "\u6700\u521D\u304B\u3089\u306E\u76F8\u68D2\u3068\u3001\u30AC\u30C1\u30E3\u3067\u4F4E\u78BA\u7387\u5165\u624B\u3067\u304D\u308B\u4EF2\u9593\u305F\u3061\u3002\u88C5\u5099\u3059\u308B\u3068\u898B\u305F\u76EE\u3068\u30D1\u30C3\u30B7\u30D6\u52B9\u679C\u304C\u5207\u308A\u66FF\u308F\u308B\u3002"), GACHA_CHARACTERS.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "#a8a29e", textAlign: "center", padding: "16px 0" } }, "\u307E\u3060\u30AD\u30E3\u30E9\u30AF\u30BF\u30FC\u304C\u767B\u9332\u3055\u308C\u3066\u3044\u307E\u305B\u3093") : /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(88px, 1fr))", gap: 10 } }, GACHA_CHARACTERS.map((c) => {
         const owned = ownedChars.includes(c.id);
         const isEquipped = equippedChar === c.id;
         return /* @__PURE__ */ React.createElement(
@@ -2569,7 +2600,7 @@
       display: "flex",
       alignItems: "center",
       gap: 12
-    } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 24 } }, "\u{1F3B4}"), /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 800, fontSize: 12, color: "#92400e" } }, "\u30AD\u30E3\u30E9\u30AF\u30BF\u30FC\u3082\u51FA\u73FE\u4E2D"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: "#78716c", marginTop: 2, lineHeight: 1.5 } }, "\u4E0B\u306E2\u7A2E\u3069\u3061\u3089\u306E\u30AC\u30C1\u30E3\u304B\u3089\u3082", Math.round(CHARACTER_DROP_RATE * 100), "%\u306E\u78BA\u7387\u3067\u4EF2\u9593\u304C\u51FA\u73FE\uFF08\u672A\u6240\u6301\u30AD\u30E3\u30E9\u306E\u307F\u5BFE\u8C61\uFF09")), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right", fontSize: 11, color: "#92400e", fontWeight: 800, whiteSpace: "nowrap" } }, ownedChars.length, "/", GACHA_CHARACTERS.length)), Object.entries(GACHA_POOLS).map(([poolId, pool]) => /* @__PURE__ */ React.createElement("div", { key: poolId, style: { ...glassCard, padding: "18px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, marginBottom: 12 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 28 } }, pool.icon), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 800, fontSize: 15 } }, pool.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "#78716c" } }, pool.desc)), /* @__PURE__ */ React.createElement("div", { style: { marginLeft: "auto", textAlign: "right" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 9, color: GOLD, letterSpacing: 2 } }, "COST"), /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 800, fontSize: 16, color: "#92400e" } }, "\u{1F48E}", pool.cost))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 6, marginBottom: 14 } }, pool.items.map((item) => /* @__PURE__ */ React.createElement("div", { key: item.id, style: {
+    } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 24 } }, "\u{1F3B4}"), /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 800, fontSize: 12, color: "#92400e" } }, "\u30AD\u30E3\u30E9\u30AF\u30BF\u30FC\u3082\u51FA\u73FE\u4E2D"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: "#78716c", marginTop: 2, lineHeight: 1.5 } }, "\u4E0B\u306E2\u7A2E\u3069\u3061\u3089\u306E\u30AC\u30C1\u30E3\u304B\u3089\u3082", Math.round(CHARACTER_DROP_RATE * 100), "%\u306E\u78BA\u7387\u3067\u4EF2\u9593\u304C\u51FA\u73FE\uFF08\u672A\u6240\u6301\u30AD\u30E3\u30E9\u306E\u307F\u5BFE\u8C61\uFF09")), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right", fontSize: 11, color: "#92400e", fontWeight: 800, whiteSpace: "nowrap" } }, GACHA_CHARACTERS.filter((c) => !c.initial && ownedChars.includes(c.id)).length, "/", GACHA_CHARACTERS.filter((c) => !c.initial).length)), Object.entries(GACHA_POOLS).map(([poolId, pool]) => /* @__PURE__ */ React.createElement("div", { key: poolId, style: { ...glassCard, padding: "18px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, marginBottom: 12 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 28 } }, pool.icon), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 800, fontSize: 15 } }, pool.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "#78716c" } }, pool.desc)), /* @__PURE__ */ React.createElement("div", { style: { marginLeft: "auto", textAlign: "right" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 9, color: GOLD, letterSpacing: 2 } }, "COST"), /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 800, fontSize: 16, color: "#92400e" } }, "\u{1F48E}", pool.cost))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 6, marginBottom: 14 } }, pool.items.map((item) => /* @__PURE__ */ React.createElement("div", { key: item.id, style: {
       display: "flex",
       alignItems: "center",
       gap: 10,
@@ -2991,7 +3022,7 @@
         filter: "drop-shadow(0 4px 16px #fbbf2455)"
       }, onError: (e) => {
         e.target.style.display = "none";
-      } })), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", marginBottom: 4 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 9, letterSpacing: 3, color: "#a16207", fontWeight: 700 } }, "UR \u2605\u2605\u2605")), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", fontSize: 20, fontWeight: 800, marginBottom: 6 } }, char.name), (() => {
+      } })), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", marginBottom: 4 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 9, letterSpacing: 3, color: "#a16207", fontWeight: 700 } }, char.rarity, " \u2605\u2605\u2605")), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", fontSize: 20, fontWeight: 800, marginBottom: 6 } }, char.name), (() => {
         const cLv = calcCharLevel(charXP[char.id] || 0);
         return /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontSize: 10, color: "#a16207", marginBottom: 3 } }, /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 800 } }, "Lv.", cLv.lv, cLv.isMax ? " (MAX)" : ""), !cLv.isMax && /* @__PURE__ */ React.createElement("span", null, cLv.current, "/", cLv.needed)), /* @__PURE__ */ React.createElement("div", { style: { height: 6, background: "#f5e9c8", borderRadius: 999, overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: {
           height: "100%",
