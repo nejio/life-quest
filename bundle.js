@@ -926,6 +926,41 @@
   function getEquippedCharData(equippedChar) {
     return GACHA_CHARACTERS.find((c) => c.id === equippedChar) || null;
   }
+  function getPartnerMessage({ todayCount, streak, dateStr, hour }) {
+    const seed = [...dateStr].reduce((s, c) => s + c.charCodeAt(0), 0) + todayCount;
+    const pick = (arr) => arr[seed % arr.length];
+    if (todayCount === 0) {
+      if (hour >= 5 && hour < 11) return pick([
+        "\u304A\u306F\u3088\u3046\u3054\u3056\u3044\u307E\u3059\u3002\u4ECA\u65E5\u306F\u3069\u3053\u304B\u3089\u59CB\u3081\u307E\u3059\u304B\u3002",
+        "\u304A\u306F\u3088\u3046\u3054\u3056\u3044\u307E\u3059\u3002\u307E\u305A\u306F\u4E00\u3064\u3001\u5C0F\u3055\u304F\u59CB\u3081\u307E\u3057\u3087\u3046\u3002"
+      ]);
+      if (hour >= 11 && hour < 17) return pick([
+        "\u77ED\u3044\u6642\u9593\u3067\u3082\u3001\u8A18\u9332\u3059\u308C\u3070\u524D\u9032\u3067\u3059\u3002",
+        "\u5C11\u3057\u7A7A\u304D\u6642\u9593\u304C\u3042\u308A\u305D\u3046\u3067\u3059\u306D\u3002\u4F55\u304B\u4E00\u3064\u3001\u3069\u3046\u3067\u3059\u304B\u3002"
+      ]);
+      if (hour >= 17 && hour < 22) return pick([
+        "\u304A\u304B\u3048\u308A\u306A\u3055\u3044\u3002\u4ECA\u65E5\u306E\u5206\u3001\u6B8B\u3057\u3066\u304A\u304D\u307E\u3057\u3087\u3046\u304B\u3002",
+        "\u4ECA\u65E5\u306F\u307E\u3060\u8A18\u9332\u304C\u3042\u308A\u307E\u305B\u3093\u3002\u591C\u306E\u3046\u3061\u306B\u4E00\u3064\u3060\u3051\u3067\u3082\u3002"
+      ]);
+      return pick([
+        "\u591C\u66F4\u304B\u3057\u3067\u3059\u306D\u3002\u7121\u7406\u306E\u306A\u3044\u7BC4\u56F2\u3067\u3002",
+        "\u9045\u3044\u6642\u9593\u3067\u3059\u306D\u3002\u4ECA\u65E5\u306F\u4F11\u3080\u306E\u3082\u9078\u629E\u306E\u3046\u3061\u3067\u3059\u3002"
+      ]);
+    }
+    if (streak >= 30) return pick([
+      `\u9023\u7D9A${streak}\u65E5\u3002\u3082\u3046\u751F\u6D3B\u306E\u4E00\u90E8\u3067\u3059\u306D\u3002`,
+      "\u3053\u306E\u7A4D\u307F\u91CD\u306D\u306F\u3001\u7C21\u5358\u306B\u306F\u5D29\u308C\u307E\u305B\u3093\u3002"
+    ]);
+    if (streak >= 7) return pick([
+      `\u9023\u7D9A${streak}\u65E5\u76EE\u3002\u7FD2\u6163\u306B\u306A\u3063\u3066\u304D\u307E\u3057\u305F\u306D\u3002`,
+      "\u826F\u3044\u6D41\u308C\u3067\u3059\u3002\u3053\u306E\u8ABF\u5B50\u3067\u3002"
+    ]);
+    return pick([
+      "\u4ECA\u65E5\u3082\u4E00\u6B69\u3002\u78BA\u304B\u306B\u7A4D\u307F\u4E0A\u304C\u3063\u3066\u3044\u307E\u3059\u3002",
+      "\u8A18\u9332\u3001\u78BA\u8A8D\u3057\u307E\u3057\u305F\u3002\u826F\u3044\u30DA\u30FC\u30B9\u3067\u3059\u3002",
+      "\u304A\u75B2\u308C\u3055\u307E\u3067\u3059\u3002\u7D9A\u304D\u306F\u3044\u3064\u3067\u3082\u3002"
+    ]);
+  }
   function calcXPBonus(catId, unlockedSkills, sessionMin = null) {
     const tree = SKILL_TREE[catId] ?? [];
     let bonus = tree.filter((n) => unlockedSkills.includes(n.id) && n.type === "xp" && n.id !== "s6").reduce((s, n) => s + n.val, 0);
@@ -1328,6 +1363,9 @@
         setBonusXP((b) => b + moved);
       }
     }, []);
+    useEffect(() => {
+      if (!equippedChar && ownedChars.includes("c000")) setEquippedChar("c000");
+    }, [equippedChar, ownedChars]);
     useEffect(() => {
       if (ownedChars.includes("c000")) return;
       setOwnedChars((prev) => prev.includes("c000") ? prev : [...prev, "c000"]);
@@ -1925,14 +1963,23 @@
     })()), /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }, (() => {
       const eqData = GACHA_CHARACTERS.find((c) => c.id === equippedChar);
       if (eqData) {
-        return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 9, color: "#a16207", letterSpacing: 3, marginBottom: 4 } }, "EQUIPPED"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 22, fontWeight: 800, marginBottom: 2 } }, eqData.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "#78716c", marginBottom: 12 } }, "\u2605\u2605\u2605 ", eqData.rarity));
+        return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 9, color: "#a16207", letterSpacing: 3, marginBottom: 4 } }, "PARTNER"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 22, fontWeight: 800, marginBottom: 2 } }, eqData.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "#78716c", marginBottom: 12 } }, "\u2605\u2605\u2605 ", eqData.rarity));
       }
       return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 9, color: stage.primaryColor, letterSpacing: 3, marginBottom: 4 } }, stage.name.toUpperCase()), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 22, fontWeight: 800, marginBottom: 2 } }, stage.title_ja), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "#78716c", marginBottom: 12 } }, "\u2605".repeat(stage.rarity), "\u2606".repeat(5 - stage.rarity)));
     })(), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 } }, [
       { v: todayLogs.length, u: "\u672C\u65E5\u306E\u8A18\u9332" },
       { v: streak, u: "\u65E5\u9023\u7D9A" },
       { v: todayXP, u: "\u672C\u65E5EXP" }
-    ].map(({ v, u }) => /* @__PURE__ */ React.createElement("div", { key: u }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 20, fontWeight: 800, color: stage.primaryColor } }, v), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 9, color: "#57534e" } }, u)))), shieldCharges > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 8, fontSize: 10, color: "#8b5cf6", fontWeight: 700 } }, "\u{1F6E1}\uFE0F \u30B9\u30C8\u30EA\u30FC\u30AF\u5B88\u8B77 \xD7", shieldCharges, "\uFF08\u8A18\u9332\u3067\u304D\u306A\u3044\u65E5\u3092\u81EA\u52D5\u3067\u30AB\u30D0\u30FC\uFF09"))), /* @__PURE__ */ React.createElement("div", { style: { ...glassCard, padding: "16px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 9, letterSpacing: 4, color: CYAN, marginBottom: 12 } }, "RECENT LOGS"), logs.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", color: "#c5bfb8", padding: "32px 0", fontSize: 13 } }, "\u307E\u3060\u8A18\u9332\u306A\u3057", /* @__PURE__ */ React.createElement("br", null), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: "#ddd8d0" } }, "LOG \u30BF\u30D6\u304B\u3089\u59CB\u3081\u3088\u3046")), logs.slice(0, 6).map((l) => {
+    ].map(({ v, u }) => /* @__PURE__ */ React.createElement("div", { key: u }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 20, fontWeight: 800, color: stage.primaryColor } }, v), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 9, color: "#57534e" } }, u)))), shieldCharges > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 8, fontSize: 10, color: "#8b5cf6", fontWeight: 700 } }, "\u{1F6E1}\uFE0F \u30B9\u30C8\u30EA\u30FC\u30AF\u5B88\u8B77 \xD7", shieldCharges, "\uFF08\u8A18\u9332\u3067\u304D\u306A\u3044\u65E5\u3092\u81EA\u52D5\u3067\u30AB\u30D0\u30FC\uFF09"), /* @__PURE__ */ React.createElement("div", { style: {
+      marginTop: 10,
+      padding: "9px 12px",
+      borderRadius: 10,
+      background: "#faf8f5",
+      border: "1px solid #eee9e2",
+      fontSize: 11,
+      color: "#57534e",
+      lineHeight: 1.6
+    } }, "\u300C", getPartnerMessage({ todayCount: todayLogs.length, streak, dateStr: today, hour: (/* @__PURE__ */ new Date()).getHours() }), "\u300D"))), /* @__PURE__ */ React.createElement("div", { style: { ...glassCard, padding: "16px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 9, letterSpacing: 4, color: CYAN, marginBottom: 12 } }, "RECENT LOGS"), logs.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", color: "#c5bfb8", padding: "32px 0", fontSize: 13 } }, "\u307E\u3060\u8A18\u9332\u306A\u3057", /* @__PURE__ */ React.createElement("br", null), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: "#ddd8d0" } }, "LOG \u30BF\u30D6\u304B\u3089\u59CB\u3081\u3088\u3046")), logs.slice(0, 6).map((l) => {
       const cat = CATEGORIES.find((c) => c.id === l.cat);
       return /* @__PURE__ */ React.createElement("div", { key: l.id, style: {
         display: "flex",
@@ -1976,9 +2023,9 @@
         filter: "drop-shadow(0 8px 24px #fbbf2455)"
       }, onError: (e) => {
         e.target.style.display = "none";
-      } })), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", position: "relative", zIndex: 1, marginTop: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 9, letterSpacing: 5, color: "#a16207" } }, "EQUIPPED CHARACTER"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 28, fontWeight: 900, margin: "4px 0" } }, equippedData.name), (() => {
+      } })), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", position: "relative", zIndex: 1, marginTop: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 9, letterSpacing: 5, color: "#a16207" } }, "PARTNER"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 28, fontWeight: 900, margin: "4px 0" } }, equippedData.name), (() => {
         const cLv = calcCharLevel(charXP[equippedData.id] || 0);
-        return /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "#a16207", marginBottom: 6, fontWeight: 700 } }, "\u30AD\u30E3\u30E9Lv.", cLv.lv, cLv.isMax ? " (MAX)" : "");
+        return /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "#a16207", marginBottom: 6, fontWeight: 700 } }, "\u7D46Lv.", cLv.lv, cLv.isMax ? " (MAX)" : "");
       })(), /* @__PURE__ */ React.createElement("div", { style: {
         display: "inline-block",
         padding: "3px 16px",
@@ -1987,19 +2034,7 @@
         border: "1px solid #fbbf2455",
         fontSize: 11,
         color: "#a16207"
-      } }, equippedData.passiveDesc)), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", marginTop: 14, position: "relative", zIndex: 1 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => {
-        setEquippedChar("");
-        showToast("RANK\u30A2\u30D0\u30BF\u30FC\u8868\u793A\u306B\u623B\u3057\u307E\u3057\u305F", "#a8a29e");
-      }, style: {
-        padding: "8px 20px",
-        borderRadius: 10,
-        border: "1px solid #d6d3d1",
-        cursor: "pointer",
-        background: "#fff",
-        color: "#78716c",
-        fontWeight: 700,
-        fontSize: 12
-      } }, "RANK\u30A2\u30D0\u30BF\u30FC\u8868\u793A\u306B\u623B\u3059"))) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: {
+      } }, equippedData.passiveDesc))) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: {
         textAlign: "center",
         fontSize: 14,
         marginBottom: 4,
@@ -2035,14 +2070,14 @@
           borderRadius: 999,
           transition: "width .6s ease"
         } })), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 9, color: "#78716c", marginTop: 4, textAlign: "right" } }, "Lv.", lvInfo.lv, " / ", next.minLv));
-      })(), /* @__PURE__ */ React.createElement("div", { style: { ...glassCard, padding: "16px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 9, letterSpacing: 3, color: "#a16207" } }, "CHARACTER COLLECTION"), /* @__PURE__ */ React.createElement("div", { style: {
+      })(), /* @__PURE__ */ React.createElement("div", { style: { ...glassCard, padding: "16px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 9, letterSpacing: 3, color: "#a16207" } }, "PARTNERS"), /* @__PURE__ */ React.createElement("div", { style: {
         fontSize: 11,
         fontWeight: 700,
         color: "#a16207",
         background: "#fef3c7",
         padding: "3px 10px",
         borderRadius: 999
-      } }, ownedChars.length, "/", GACHA_CHARACTERS.length)), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "#78716c", marginBottom: 14 } }, "\u6700\u521D\u304B\u3089\u306E\u76F8\u68D2\u3068\u3001\u30AC\u30C1\u30E3\u3067\u4F4E\u78BA\u7387\u5165\u624B\u3067\u304D\u308B\u4EF2\u9593\u305F\u3061\u3002\u88C5\u5099\u3059\u308B\u3068\u898B\u305F\u76EE\u3068\u30D1\u30C3\u30B7\u30D6\u52B9\u679C\u304C\u5207\u308A\u66FF\u308F\u308B\u3002"), GACHA_CHARACTERS.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "#a8a29e", textAlign: "center", padding: "16px 0" } }, "\u307E\u3060\u30AD\u30E3\u30E9\u30AF\u30BF\u30FC\u304C\u767B\u9332\u3055\u308C\u3066\u3044\u307E\u305B\u3093") : /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(88px, 1fr))", gap: 10 } }, GACHA_CHARACTERS.map((c) => {
+      } }, ownedChars.length, "/", GACHA_CHARACTERS.length)), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "#78716c", marginBottom: 14 } }, "\u6700\u521D\u304B\u3089\u306E\u76F8\u68D2\u3068\u3001\u30AC\u30C1\u30E3\u3067\u51FA\u4F1A\u3048\u308B\u4EF2\u9593\u305F\u3061\u3002\u30D1\u30FC\u30C8\u30CA\u30FC\u306B\u3059\u308B\u3068\u3001\u5171\u306B\u904E\u3054\u3059\u59FF\u3068\u30D1\u30C3\u30B7\u30D6\u52B9\u679C\u304C\u5207\u308A\u66FF\u308F\u308B\u3002"), GACHA_CHARACTERS.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "#a8a29e", textAlign: "center", padding: "16px 0" } }, "\u307E\u3060\u30AD\u30E3\u30E9\u30AF\u30BF\u30FC\u304C\u767B\u9332\u3055\u308C\u3066\u3044\u307E\u305B\u3093") : /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(88px, 1fr))", gap: 10 } }, GACHA_CHARACTERS.map((c) => {
         const owned = ownedChars.includes(c.id);
         const isEquipped = equippedChar === c.id;
         return /* @__PURE__ */ React.createElement(
@@ -2103,7 +2138,7 @@
             background: "#fde68a",
             padding: "1px 6px",
             borderRadius: 4
-          } }, "\u88C5\u5099\u4E2D")
+          } }, "\u30D1\u30FC\u30C8\u30CA\u30FC")
         );
       }))));
     })(), tab === "record" && (() => {
@@ -3042,24 +3077,20 @@
         marginBottom: 16,
         background: "#faf8f5",
         border: "1px solid #f0ede8"
-      } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "#44403c", lineHeight: 1.7, fontStyle: "italic" } }, '"', char.flavor, '"')), isEquipped ? /* @__PURE__ */ React.createElement("button", { onClick: () => {
-        setEquippedChar("");
-        setCharDetail(null);
-        showToast("\u57FA\u672C\u30AD\u30E3\u30E9\u30AF\u30BF\u30FC\u306B\u623B\u3057\u307E\u3057\u305F", "#a8a29e");
-      }, style: {
+      } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "#44403c", lineHeight: 1.7, fontStyle: "italic" } }, '"', char.flavor, '"')), isEquipped ? /* @__PURE__ */ React.createElement("div", { style: {
         width: "100%",
         padding: "11px",
         borderRadius: 12,
-        border: "1px solid #d6d3d1",
-        cursor: "pointer",
-        background: "#fff",
-        color: "#78716c",
-        fontWeight: 700,
+        textAlign: "center",
+        background: "#fef3c7",
+        border: "1px solid #fbbf2455",
+        color: "#92400e",
+        fontWeight: 800,
         fontSize: 13
-      } }, "\u88C5\u5099\u3092\u89E3\u9664\u3059\u308B") : /* @__PURE__ */ React.createElement("button", { onClick: () => {
+      } }, "\u73FE\u5728\u306E\u30D1\u30FC\u30C8\u30CA\u30FC") : /* @__PURE__ */ React.createElement("button", { onClick: () => {
         setEquippedChar(char.id);
         setCharDetail(null);
-        showToast(`${char.name}\u3092\u88C5\u5099\u3057\u305F\uFF01`, "#f0c060");
+        showToast(`${char.name}\u304C\u30D1\u30FC\u30C8\u30CA\u30FC\u306B\u306A\u3063\u305F\uFF01`, "#f0c060");
       }, style: {
         width: "100%",
         padding: "11px",
@@ -3070,7 +3101,7 @@
         color: "#fff",
         fontWeight: 800,
         fontSize: 13
-      } }, "\u3053\u306E\u30AD\u30E3\u30E9\u30AF\u30BF\u30FC\u3092\u88C5\u5099\u3059\u308B")) : /* @__PURE__ */ React.createElement("div", { style: {
+      } }, "\u30D1\u30FC\u30C8\u30CA\u30FC\u306B\u3059\u308B")) : /* @__PURE__ */ React.createElement("div", { style: {
         padding: "24px 16px",
         borderRadius: 12,
         textAlign: "center",
